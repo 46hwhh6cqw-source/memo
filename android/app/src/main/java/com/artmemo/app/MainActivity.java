@@ -4,6 +4,8 @@ import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.view.Gravity;
+import android.view.ViewGroup;
 import android.webkit.ValueCallback;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
@@ -11,6 +13,8 @@ import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
+import android.widget.Button;
+import android.widget.FrameLayout;
 
 import androidx.activity.OnBackPressedCallback;
 import androidx.activity.result.ActivityResultLauncher;
@@ -21,7 +25,7 @@ import androidx.webkit.WebViewAssetLoader;
 
 /**
  * アプリ本体。バンドルした Web アプリ(index.html / style.css / app.js)を
- * WebView で表示する。通信は行わず、すべて端末内で完結する。
+ * WebView で表示する。
  */
 public class MainActivity extends AppCompatActivity {
 
@@ -50,8 +54,28 @@ public class MainActivity extends AppCompatActivity {
                 .addPathHandler("/assets/", new WebViewAssetLoader.AssetsPathHandler(this))
                 .build();
 
+        FrameLayout root = new FrameLayout(this);
         webView = new WebView(this);
-        setContentView(webView);
+        root.addView(webView, new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.MATCH_PARENT));
+
+        Button updateButton = new Button(this);
+        updateButton.setText("更新");
+        updateButton.setTextSize(13);
+        updateButton.setAllCaps(false);
+        updateButton.setAlpha(0.88f);
+        updateButton.setOnClickListener(v -> new AppUpdater(this).start());
+
+        FrameLayout.LayoutParams updateParams = new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                Gravity.END | Gravity.BOTTOM);
+        int margin = dp(12);
+        updateParams.setMargins(margin, margin, margin, margin);
+        root.addView(updateButton, updateParams);
+
+        setContentView(root);
 
         WebSettings settings = webView.getSettings();
         settings.setJavaScriptEnabled(true);
@@ -103,6 +127,10 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
+    }
+
+    private int dp(int value) {
+        return Math.round(value * getResources().getDisplayMetrics().density);
     }
 
     @Override
