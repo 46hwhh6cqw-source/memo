@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>アートメモ帳</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="appbar">
+  <div class="logo">🎨 アートメモ帳</div>
+  <nav class="tabs">
+    <button class="tab active" data-view="memo">📝 メモ帳</button>
+    <button class="tab" data-view="art">🖌 アート</button>
+    <button class="tab" data-view="calc">🔢 電卓</button>
+  </nav>
+</header>
+
+<main>
+
+<!-- ================= メモ帳 ================= -->
+<section id="view-memo" class="view active">
+  <aside class="memo-side">
+    <div class="memo-side-head">
+      <input type="search" id="memoSearch" placeholder="🔍 メモを検索...">
+      <button id="memoNew" class="btn primary">＋ 新規メモ</button>
+    </div>
+    <ul id="memoList"></ul>
+    <div class="memo-side-foot">
+      <button id="memoExport" class="btn small" title="全メモをJSONで書き出し">📤 バックアップ</button>
+      <button id="memoImport" class="btn small" title="JSONから読み込み">📥 復元</button>
+      <input type="file" id="memoImportFile" accept="application/json" hidden>
+    </div>
+  </aside>
+  <div class="memo-editor" id="memoEditor">
+    <div class="memo-editor-bar">
+      <input type="text" id="memoTitle" placeholder="タイトル">
+      <button id="memoPin"      class="btn icon" title="ピン留め">📌</button>
+      <button id="memoDownload" class="btn icon" title="テキストファイルとして保存">💾</button>
+      <button id="memoDelete"   class="btn icon danger" title="このメモを削除">🗑</button>
+    </div>
+    <textarea id="memoBody" placeholder="ここにメモを書く…&#10;&#10;内容は自動保存されます。" spellcheck="false"></textarea>
+    <div class="memo-status">
+      <span id="memoInfo"></span>
+      <span id="memoCount"></span>
+    </div>
+  </div>
+  <div class="memo-empty" id="memoEmpty">
+    <p>📝</p>
+    <p>メモがありません。<br>「＋ 新規メモ」から作成してください。</p>
+  </div>
+</section>
+
+<!-- ================= アート ================= -->
+<section id="view-art" class="view">
+  <div class="art-tools" id="artTools">
+    <button class="tool active" data-tool="pen"      title="ペン (B)">🖊</button>
+    <button class="tool" data-tool="pencil"   title="鉛筆 (P)">✏️</button>
+    <button class="tool" data-tool="marker"   title="マーカー (M)">🖍</button>
+    <button class="tool" data-tool="airbrush" title="エアブラシ (A)">💨</button>
+    <button class="tool" data-tool="eraser"   title="消しゴム (E)">🧽</button>
+    <button class="tool" data-tool="fill"     title="塗りつぶし (G)">🪣</button>
+    <button class="tool" data-tool="eyedrop"  title="スポイト (I)">💧</button>
+    <button class="tool" data-tool="hand"     title="移動 (H / Space)">✋</button>
+    <div class="sep"></div>
+    <button class="tool" id="artUndo" title="元に戻す (Ctrl+Z)">↩️</button>
+    <button class="tool" id="artRedo" title="やり直す (Ctrl+Y)">↪️</button>
+    <div class="sep"></div>
+    <button class="tool" id="artZoomIn"  title="拡大">➕</button>
+    <button class="tool" id="artZoomOut" title="縮小">➖</button>
+    <button class="tool" id="artZoomFit" title="全体表示">🔲</button>
+    <div class="sep"></div>
+    <button class="tool" id="artNew"     title="新規キャンバス">🆕</button>
+    <button class="tool" id="artSaveImg" title="PNG書き出し">💾</button>
+    <button class="tool" id="artGallerySave" title="ギャラリーに保存">⭐</button>
+    <button class="tool" id="artGallery" title="ギャラリー">🗂</button>
+  </div>
+
+  <div class="art-main">
+    <div class="art-canvas-wrap" id="artWrap">
+      <canvas id="artCanvas"></canvas>
+      <div class="art-zoom-label" id="artZoomLabel">100%</div>
+    </div>
+
+    <aside class="art-panel">
+      <div class="panel-block">
+        <h3>ブラシ</h3>
+        <label class="slider-row">サイズ <input type="range" id="brushSize" min="1" max="200" value="12"><span id="brushSizeVal">12</span></label>
+        <label class="slider-row">不透明度 <input type="range" id="brushOpacity" min="1" max="100" value="100"><span id="brushOpacityVal">100%</span></label>
+        <label class="slider-row">手ぶれ補正 <input type="range" id="brushSmooth" min="0" max="80" value="30"><span id="brushSmoothVal">30</span></label>
+        <div class="brush-preview"><canvas id="brushPreview" width="220" height="44"></canvas></div>
+      </div>
+
+      <div class="panel-block">
+        <h3>カラー</h3>
+        <div class="color-picker">
+          <canvas id="svPicker" width="168" height="140"></canvas>
+          <canvas id="huePicker" width="20" height="140"></canvas>
+        </div>
+        <div class="color-row">
+          <div class="color-current" id="colorCurrent"></div>
+          <input type="text" id="colorHex" value="#222222" maxlength="7" spellcheck="false">
+        </div>
+        <div class="swatches" id="swatches"></div>
+        <h4>最近使った色</h4>
+        <div class="swatches" id="recentColors"></div>
+      </div>
+
+      <div class="panel-block">
+        <h3>レイヤー
+          <span class="layer-btns">
+            <button id="layerAdd"    class="btn tiny" title="レイヤー追加">＋</button>
+            <button id="layerDup"    class="btn tiny" title="レイヤー複製">⧉</button>
+            <button id="layerMerge"  class="btn tiny" title="下のレイヤーと結合">⤵</button>
+            <button id="layerClear"  class="btn tiny" title="レイヤーをクリア">✕</button>
+            <button id="layerDelete" class="btn tiny danger" title="レイヤー削除">🗑</button>
+          </span>
+        </h3>
+        <div class="layer-opts">
+          <select id="layerBlend" title="ブレンドモード">
+            <option value="source-over">通常</option>
+            <option value="multiply">乗算</option>
+            <option value="screen">スクリーン</option>
+            <option value="overlay">オーバーレイ</option>
+            <option value="lighter">加算</option>
+          </select>
+          <input type="range" id="layerOpacity" min="0" max="100" value="100" title="レイヤー不透明度">
+        </div>
+        <ul id="layerList"></ul>
+      </div>
+    </aside>
+  </div>
+
+  <!-- 新規キャンバスモーダル -->
+  <div class="modal hidden" id="newCanvasModal">
+    <div class="modal-box">
+      <h3>新規キャンバス</h3>
+      <div class="modal-row">
+        <label>幅 <input type="number" id="newCanvasW" value="1200" min="64" max="4096"></label>
+        <label>高さ <input type="number" id="newCanvasH" value="900" min="64" max="4096"></label>
+      </div>
+      <div class="modal-row presets">
+        <button class="btn small" data-size="1200x900">4:3</button>
+        <button class="btn small" data-size="1280x720">16:9</button>
+        <button class="btn small" data-size="1000x1000">正方形</button>
+        <button class="btn small" data-size="900x1200">縦長</button>
+      </div>
+      <p class="modal-note">⚠ 現在の絵は消えます(ギャラリー保存済みなら復元可)</p>
+      <div class="modal-actions">
+        <button class="btn" id="newCanvasCancel">キャンセル</button>
+        <button class="btn primary" id="newCanvasOk">作成</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ギャラリーモーダル -->
+  <div class="modal hidden" id="galleryModal">
+    <div class="modal-box wide">
+      <h3>🗂 ギャラリー <button class="btn small" id="galleryClose" style="float:right">閉じる</button></h3>
+      <div class="gallery-grid" id="galleryGrid"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 電卓 ================= -->
+<section id="view-calc" class="view">
+  <div class="calc-wrap">
+    <div class="calc">
+      <div class="calc-mode">
+        <button id="calcDeg" class="btn small active">DEG</button>
+        <button id="calcRad" class="btn small">RAD</button>
+        <span class="calc-mem" id="calcMemInd"></span>
+      </div>
+      <input type="text" id="calcDisplay" class="calc-display" placeholder="0" spellcheck="false" autocomplete="off">
+      <div class="calc-sub" id="calcSub"></div>
+      <div class="calc-grid" id="calcGrid"></div>
+    </div>
+    <div class="calc-history">
+      <h3>履歴 <button id="calcHistClear" class="btn tiny">クリア</button></h3>
+      <ul id="calcHistList"></ul>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<script src="app.js"></script>
+</body>
+</html>
