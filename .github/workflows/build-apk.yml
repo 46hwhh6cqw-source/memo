@@ -102,3 +102,5 @@ jobs:
           path: android/build.log
           if-no-files-found: warn
           retention-days: 7
+
+# Trigger a push build so the fixed latest release is published.
