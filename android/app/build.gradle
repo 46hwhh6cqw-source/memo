@@ -2,6 +2,10 @@ plugins {
     id 'com.android.application'
 }
 
+def ciBuildNumber = System.getenv('GITHUB_RUN_NUMBER')
+def resolvedVersionCode = ciBuildNumber ? ciBuildNumber.toInteger() : 2
+def resolvedVersionName = ciBuildNumber ? "1.1.${ciBuildNumber}" : "1.1"
+
 android {
     namespace 'com.artmemo.app'
     compileSdk 34
@@ -10,8 +14,8 @@ android {
         applicationId "com.artmemo.app"
         minSdk 26
         targetSdk 34
-        versionCode 1
-        versionName "1.0"
+        versionCode resolvedVersionCode
+        versionName resolvedVersionName
     }
 
     buildTypes {
